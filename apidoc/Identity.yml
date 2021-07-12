@@ -16,26 +16,32 @@ description: |
     Add the module as a dependency to your application by adding a **`<module>`** item to the
     **`<modules>`** element of your `tiapp.xml` file:
 
-        <ti:app>
-          ...
-          <modules>
-            <module platform="iphone">ti.identity</module>
-          </modules>
-          ...
-        </ti:app>
+    ``` xml
+    <ti:app>
+      <!-- ... -->
+      <modules>
+        <module platform="iphone">ti.identity</module>
+      </modules>
+      <!-- ... -->
+    </ti:app>
+    ```
 
     Use `require()` to access the module from JavaScript:
 
-        var Identity = require('ti.identity');
+    ``` javascript
+    var Identity = require('ti.identity');
+    ```
 
     The `Identity` variable is a reference to the module. Make API calls using this reference:
 
-        Identity.authenticate({
-            reason: 'Verify to modify personal settings',
-            callback: function(e) {
-                Ti.API.info(e);
-            }
-        });
+    ``` javascript
+    Identity.authenticate({
+        reason: 'Verify to modify personal settings',
+        callback: function(e) {
+            Ti.API.info(e);
+        }
+    });
+    ```
 
     ### Lifetime Notes (iOS-only)
 
@@ -49,33 +55,37 @@ description: |
     Use the <Modules.Identity.biometryType> to receive the currently used biometry type. See an example of
     using the property to create a personalized interface when using Touch ID and Face ID:
 
-        var authPhrase = 'Unknown';
+    ``` javascript
+    var authPhrase = 'Unknown';
 
-        if (TiIdentity.biometryType === TiIdentity.BIOMETRY_TYPE_FACE_ID) { // Face ID
-            authPhrase = 'Face ID';
-        } else if (TiIdentity.biometryType === TiIdentity.BIOMETRY_TYPE_TOUCH_ID) { // Touch ID
-            authPhrase = 'Touch ID';
-        }
+    if (TiIdentity.biometryType === TiIdentity.BIOMETRY_TYPE_FACE_ID) { // Face ID
+        authPhrase = 'Face ID';
+    } else if (TiIdentity.biometryType === TiIdentity.BIOMETRY_TYPE_TOUCH_ID) { // Touch ID
+        authPhrase = 'Touch ID';
+    }
+    ```
         
     ## Face ID Requirements (iOS only)
 
     For Face ID to work properly, you need to add a **`<key>`** item to the
     **`<plist>`** element of your `tiapp.xml` file:
 
-        <ti:app>
-          ...
-          <ios>
-            ...
-            <plist>
-              <dict>
-                <key>NSFaceIDUsageDescription</key>
-                <string>Why you need Face ID.</string>
-              </dict>
-            </plist>
-            ...
-          </ios>
-          ...
-        </ti:app>
+    ``` xml
+    <ti:app>
+      <!-- ... -->
+      <ios>
+        <!-- ... -->
+        <plist>
+          <dict>
+            <key>NSFaceIDUsageDescription</key>
+            <string>Why you need Face ID.</string>
+          </dict>
+        </plist>
+        <!-- ... -->
+      </ios>
+      <!-- ... -->
+    </ti:app>
+    ```
 
     ### Native Keychain Integration
 
@@ -85,17 +95,24 @@ description: |
 
     The module contains a sample application in the
     `<TITANIUM_SDK_HOME>/modules/iphone/ti.identity/<VERSION>/example/` folder.
-
 methods:
+  - name: createKeychainItem
+    summary: Create KeychainItem.
+    parameters:
+      - name: params
+        summary: Dictionary of arguments passed to the method.
+        type: KeychainItemType
+
   - name: authenticate
     summary: Initiates the biometric authentication process.
     description: |
       A special note for Android:
 
-      When you call this method in Android, if you provide an incorrect fingerprint and receive an error
-      message "Unable to recognize fingerprint", do not call authenticate. Instead, get the user to try
-      again. If you call authenticate, it will end up in a bad state. This flow will be improved in the
-      next update for Android.
+      When you call this method in Android, it will either authenticate the fingerprint or it will fallback 
+      to the device's password, pin or pattern which is the case when biometric means of identification is 
+      not available. If you provide an incorrect fingerprint and receive an error message "Unable to recognize
+      fingerprint", do not call authenticate. Instead, get the user to try again. If you call authenticate, 
+      it will end up in a bad state. This flow will be improved in the next update for Android. 
     parameters:
       - name: params
         summary: Dictionary of arguments passed to the method, e.g. the reason to autheicate and the callback.
@@ -112,7 +129,6 @@ methods:
         used for policy evaluation and an attempt to do so will fail with <Modules.Identity.ERROR_INVALID_CONTEXT>.
 
         See the "Lifetime Notes (iOS-only)" paragraph in the module paragraph for more infos.
-
     platforms: [iphone, ipad, android]
     since: "6.1.0"
 
@@ -122,18 +138,25 @@ methods:
         On Android this takes into account the `authenticationPolicy`.
 
         Example:
-            var Identity = require("ti.identity");
-            var result = Identity.deviceCanAuthenticate();
-            if (!result.canAuthenticate) {
-                alert('Message: ' + result.error + '\nCode: ' + result.code);
-            } else {
-                alert('Device can authenticate');
-            }
+
+        ``` javascript
+        var Identity = require("ti.identity");
+        var result = Identity.deviceCanAuthenticate();
+        if (!result.canAuthenticate) {
+            alert('Message: ' + result.error + '\nCode: ' + result.code);
+        } else {
+            alert('Device can authenticate');
+        }
+        ```
     returns:
         type: DeviceCanAuthenticateResult
 
   - name: isSupported
     summary: Determines if the current device supports Touch ID or Face ID.
+    description: | 
+        This module is only supported on Android 6.0 or newer. So, this method always returns
+        `false` on older versions of Android.
+
     returns:
         type: Boolean
 
@@ -205,6 +228,23 @@ properties:
     permission: read-only
     platforms: [iphone, ipad, android]
     since: "6.1.0"
+
+  - name: AUTHENTICATION_POLICY_BIOMETRICS_OR_WATCH
+    summary: Device owner was authenticated using a biometric method or the Apple Watch.
+    type: Number
+    permission: read-only
+    platforms: [iphone, ipad]
+    osver: {ios: {min: "13.0"}}
+    since: "9.0.0"
+
+  - name: AUTHENTICATION_POLICY_WATCH
+    summary: Device owner was authenticated using the Apple Watch.
+    type: Number
+    permission: read-only
+    platforms: [iphone, ipad]
+    osver: {ios: {min: "13.0"}}
+    since: "9.0.0"
+
   - name: BIOMETRY_TYPE_NONE
     summary: The device does not support biometry.
     description: |
@@ -239,7 +279,7 @@ properties:
     summary: Constant indicating that the authentication was not successful.
     type: Number
     permission: read-only
-    platforms: [iphone, ipad]
+    platforms: [iphone, ipad, android]
 
   - name: ERROR_PASSCODE_NOT_SET
     summary: Constant indicating that the passcode is not set for the device.
@@ -307,7 +347,7 @@ properties:
          and later.
     type: Number
     permission: read-only
-    platforms: [iphone, ipad]
+    platforms: [iphone, ipad, android]
 
   - name: ERROR_BIOMETRY_LOCKOUT
     summary: |
@@ -332,7 +372,6 @@ properties:
     type: Number
     osver: {ios: {min: "11.0"}}
     permission: read-only
-
     platforms: [iphone, ipad]
 
   - name: ACCESSIBLE_WHEN_UNLOCKED
@@ -341,7 +380,7 @@ properties:
         recommended for items that only need be accesible while the application
         is in the foreground.  Items with this attribute will migrate to a new
         device when using encrypted backups.
-    type: Number
+    type: String
     permission: read-only
     platforms: [iphone, ipad]
     since: "6.1.0"
@@ -352,7 +391,7 @@ properties:
         a restart.  This is recommended for items that need to be accesible by
         background applications. Items with this attribute will migrate to a new
         device when using encrypted backups.
-    type: Number
+    type: String
     permission: read-only
     platforms: [iphone, ipad]
     since: "6.1.0"
@@ -362,7 +401,9 @@ properties:
         Item data can always be accessed regardless of the lock state of the device.
         This is not recommended for anything except system use. Items with this
         attribute will migrate to a new device when using encrypted backups.
-    type: Number
+    description: |
+        Value is a Number on Android, a String on iOS.
+    type: [Number, String]
     permission: read-only
     platforms: [iphone, ipad, android]
     since: "6.1.0"
@@ -377,7 +418,9 @@ properties:
          will be missing. No items can be stored in this class on devices
          without a passcode. Disabling the device passcode will cause all
          items in this class to be deleted.
-    type: Number
+    description: |
+        Value is a Number on Android, a String on iOS.
+    type: [Number, String]
     permission: read-only
     platforms: [iphone, ipad, android]
     since: "6.1.0"
@@ -389,7 +432,7 @@ properties:
         is in the foreground. Items with this attribute will never migrate to a
         new device, so after a backup is restored to a new device, these items
         will be missing.
-    type: Number
+    type: String
     permission: read-only
     platforms: [iphone, ipad]
     since: "6.1.0"
@@ -401,7 +444,7 @@ properties:
         background applications. Items with this attribute will never migrate to
         a new device, so after a backup is restored to a new device these items
         will be missing.
-    type: Number
+    type: String
     permission: read-only
     platforms: [iphone, ipad]
     since: "6.1.0"
@@ -412,7 +455,9 @@ properties:
         This option is not recommended for anything except system use. Items with
         this attribute will never migrate to a new device, so after a backup is
         restored to a new device, these items will be missing.
-    type: Number
+    description: |
+        Value is a Number on Android, a String on iOS.
+    type: [Number, String]
     permission: read-only
     platforms: [iphone, ipad, android]
     since: "6.1.0"

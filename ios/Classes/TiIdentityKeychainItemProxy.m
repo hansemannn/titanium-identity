@@ -45,6 +45,11 @@
 
 #pragma mark Public API's
 
+- (NSString *)apiName
+{
+  return @"Ti.Identity.KeychainItem";
+}
+
 - (void)save:(id)value
 {
   ENSURE_SINGLE_ARG(value, NSString);
@@ -72,18 +77,19 @@
   ENSURE_SINGLE_ARG(value, KrollCallback);
 
   [[self keychainItem] exists:^(BOOL result, NSError *error) {
-    TiThreadPerformOnMainThread(^{
-      NSMutableDictionary *propertiesDict = [NSMutableDictionary dictionaryWithDictionary:@{ @"exists" : NUMBOOL(result) }];
+    TiThreadPerformOnMainThread(
+        ^{
+          NSMutableDictionary *propertiesDict = [NSMutableDictionary dictionaryWithDictionary:@{ @"exists" : NUMBOOL(result) }];
 
-      if (error) {
-        [propertiesDict setObject:[error localizedDescription] forKey:@"error"];
-      }
+          if (error) {
+            [propertiesDict setObject:[error localizedDescription] forKey:@"error"];
+          }
 
-      NSArray *invocationArray = [[NSArray alloc] initWithObjects:&propertiesDict count:1];
+          NSArray *invocationArray = [[NSArray alloc] initWithObjects:&propertiesDict count:1];
 
-      [value call:invocationArray thisObject:self];
-      invocationArray = nil;
-    },
+          [value call:invocationArray thisObject:self];
+          invocationArray = nil;
+        },
         YES);
   }];
 }
@@ -93,7 +99,9 @@
 - (void)APSKeychainWrapper:(APSKeychainWrapper *)keychainWrapper didSaveValueWithResult:(NSDictionary *)result
 {
   if ([self _hasListeners:@"save"]) {
-    [self fireEvent:@"save" withObject:result];
+    NSMutableDictionary *m = [result mutableCopy];
+    [m setValue:NUMINTEGER(0) forKey:@"code"];
+    [self fireEvent:@"save" withObject:m];
   }
 }
 
@@ -107,7 +115,9 @@
 - (void)APSKeychainWrapper:(APSKeychainWrapper *)keychainWrapper didReadValueWithResult:(NSDictionary *)result
 {
   if ([self _hasListeners:@"read"]) {
-    [self fireEvent:@"read" withObject:result];
+    NSMutableDictionary *m = [result mutableCopy];
+    [m setValue:NUMINTEGER(0) forKey:@"code"];
+    [self fireEvent:@"read" withObject:m];
   }
 }
 
@@ -128,7 +138,9 @@
 - (void)APSKeychainWrapper:(APSKeychainWrapper *)keychainWrapper didDeleteValueWithResult:(NSDictionary *)result
 {
   if ([self _hasListeners:@"reset"]) {
-    [self fireEvent:@"reset" withObject:result];
+    NSMutableDictionary *m = [result mutableCopy];
+    [m setValue:NUMINTEGER(0) forKey:@"code"];
+    [self fireEvent:@"reset" withObject:m];
   }
 }
 
@@ -142,7 +154,9 @@
 - (void)APSKeychainWrapper:(APSKeychainWrapper *)keychainWrapper didUpdateValueWithResult:(NSDictionary *)result
 {
   if ([self _hasListeners:@"update"]) {
-    [self fireEvent:@"update" withObject:result];
+    NSMutableDictionary *m = [result mutableCopy];
+    [m setValue:NUMINTEGER(0) forKey:@"code"];
+    [self fireEvent:@"update" withObject:m];
   }
 }
 
